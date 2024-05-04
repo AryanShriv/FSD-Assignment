@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link'
 
 const ManageDevicesPage: React.FC = () => {
   // Sample data for demonstration
