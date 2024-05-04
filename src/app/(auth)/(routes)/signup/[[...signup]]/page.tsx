@@ -68,7 +68,7 @@ const Page = () => {
                                     <FormItem className='space-y-0 mb-2'>
                                         <FormLabel>Name</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Aryan" {...field} />
+                                            <Input placeholder="Lorem" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
