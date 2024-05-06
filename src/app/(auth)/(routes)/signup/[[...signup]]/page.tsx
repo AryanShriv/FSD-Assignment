@@ -15,31 +15,43 @@ import {
 import { Input } from "@/components/ui/input"
 import { FaFacebook, FaGithub, FaGoogle } from "react-icons/fa6";
 import Link from 'next/link'
+import axios from 'axios'; 
+import { useRouter } from 'next/navigation'
 
 const signUpSchema = z.object({
-    name: z.string().min(2, "Name Should have atleast 2 characters.").max(50, "Name should not exceed 50 characters.").refine((value) => /^[a-zA-Z]+[-'s]?[a-zA-Z ]+$/.test(value), 'Name should contain only alphabets.'),
+    fullName: z.string().min(2, "Name Should have atleast 2 characters.").max(50, "Name should not exceed 50 characters.").refine((value) => /^[a-zA-Z]+[-'s]?[a-zA-Z ]+$/.test(value), 'Name should contain only alphabets.'),
     email: z.string().email("Email must be valid."),
-    password: z.string().min(6, "Password Should have atleast 6 characters."),
-    confirmPassword: z.string().min(6, "Password Should have atleast 6 characters.")
-}).refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords does not match.",
-    path: ["confirmPassword"],
+    password: z.string().min(6, "Password Should have atleast 6 characters.")
 });
 
 const Page = () => {
+    
+    const router = useRouter();
+
     const form = useForm<z.infer<typeof signUpSchema>>({
         resolver: zodResolver(signUpSchema),
         defaultValues: {
-          name: "",
+          fullName: "",
           email: "",
           password: "",
-          confirmPassword: "",
         },
     })
 
-    function onSubmit(values: z.infer<typeof signUpSchema>) {
-        console.log(values)
-    }
+    const onSubmit = async (values: z.infer<typeof signUpSchema>) => {
+        try {
+            const response = await axios.post('http://localhost:3001/api/user', values);
+
+            if (response.status === 201) {
+                alert(response.data.message);
+                router.push('/signin');
+            } else {
+                console.error('Failed to create user:', response.data.message);
+            }
+        } catch (error) {
+            console.error('Failed to create user:', error);
+        }
+    };
+
   return (
     <>
         <div className="signUpWrapper">
@@ -63,7 +75,7 @@ const Page = () => {
                         <form onSubmit={form.handleSubmit(onSubmit)}>
                             <FormField
                                 control={form.control}
-                                name="name"
+                                name="fullName"
                                 render={({ field }) => (
                                     <FormItem className='space-y-0 mb-2'>
                                         <FormLabel>Name</FormLabel>
@@ -93,19 +105,6 @@ const Page = () => {
                                 render={({ field }) => (
                                     <FormItem className='space-y-0 mb-2'>
                                         <FormLabel>Password</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="********" type='password' {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="confirmPassword"
-                                render={({ field }) => (
-                                    <FormItem className='space-y-0 mb-2'>
-                                        <FormLabel>Confirm Password</FormLabel>
                                         <FormControl>
                                             <Input placeholder="********" type='password' {...field} />
                                         </FormControl>

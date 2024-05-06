@@ -1,34 +1,94 @@
-import React from 'react';
+"use client"
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation';
+import { Button } from "@/components/ui/button"
+import axios from 'axios'; 
 
 const ManageDevicesPage: React.FC = () => {
-  // Sample data for demonstration
-  const devices = [
-    { id: 1, name: 'Device 1', lastLogin: '2024-04-30 08:30:00', isLoggedIn: true },
-    { id: 2, name: 'Device 2', lastLogin: '2024-04-29 15:45:00', isLoggedIn: false },
-    { id: 3, name: 'Device 3', lastLogin: '2024-04-28 21:10:00', isLoggedIn: false },
-    // Add more sample data as needed
-  ];
+  
+  const router = useRouter();
+  const [devices, setDevices] = useState([]);
+  
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
+
+  useEffect(() => {
+    fetchDevices(); 
+  }, []); 
+
+const fetchDevices = async () => {
+    try {
+      const userToken = localStorage.getItem('userToken');
+      const response = await axios.get('http://localhost:3001/api/user/userByToken', {
+        headers: {
+          Authorization: `Bearer ${userToken}`,
+        },
+      });
+      setDevices(response.data.data.loginHistory);
+    } catch (error) {
+      console.error('Error fetching devices data:', error);
+    }
+};
+
+    const handleLogout = () => {
+      localStorage.removeItem('userToken');
+      router.push('/signin');
+    };
+
+    const handleSignOutLoginHistoryId = async (loginHistoryId: string) => {
+      try {
+          const userToken = localStorage.getItem('userToken');
+          if (!userToken || !loginHistoryId) {
+              console.error('User token or loginHistoryId not found');
+              return;
+          }
+
+          const response = await axios.delete(`http://localhost:3001/api/user/logout/${loginHistoryId}`, {
+              headers: {
+                  Authorization: `Bearer ${userToken}`,
+              },
+          });
+
+          if (response.status === 200) {
+            fetchDevices(); 
+        } else {
+            console.error('Logout failed');
+        }
+      } catch (error) {
+          console.error('Logout failed', error);
+      }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
+        <div className="mt-8 text-right">
+        <Link href={"/signin"}>
+          <h3>To manage your devices sign in:</h3>
+          <Button className='border-zinc-850 text-zinc-300 hover:border-zinc-200 hover:text-zinc-100 transition-colors border  px-8'>Sign In</Button>
+        </Link>
+      {isLoggedIn && (
+        <button
+          className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded"
+          onClick={handleLogout}
+        >
+          Logout
+        </button>
+      )}
+    </div>
       <h1 className="text-3xl font-bold mb-8 text-blue-700">Manage Devices</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {devices.map((device) => (
-          <div key={device.id} className="border border-gray-300 rounded-md p-4 flex flex-col bg-gray-100">
-            <h2 className="text-lg font-semibold mb-2">{device.name}</h2>
+          <div key={device._id} className="border border-gray-300 rounded-md p-4 flex flex-col bg-gray-100">
+            <h2 className="text-lg font-semibold mb-2">{device.browser}</h2>
             <p className="text-sm mb-2">
-              Last Login: {new Date(device.lastLogin).toLocaleString()}
+              Last Login: {new Date(device.loginTime).toLocaleString()}
             </p>
             <p className="text-sm">
-              Status: {device.isLoggedIn ? 'Logged In' : 'Logged Out'}
-            </p>
-            {/* Placeholder buttons for actions */}
-            <div className="mt-auto pt-4 border-t border-gray-300">
-              <button className="text-sm font-semibold text-blue-600 hover:underline">
-                View Details
+              Status:   
+              <button className="text-sm font-semibold text-blue-600 hover:underline" onClick={() => handleSignOutLoginHistoryId(device._id)}>
+                Logout
               </button>
-            </div>
+            </p>
           </div>
         ))}
       </div>

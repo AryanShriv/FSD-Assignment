@@ -1,5 +1,5 @@
 "use client"
-import React from 'react'
+import React, { useState } from 'react'
 import * as z from "zod"
 import { Button } from "@/components/ui/button"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -15,6 +15,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { FaFacebook, FaGithub, FaGoogle } from "react-icons/fa6";
 import Link from 'next/link'
+import axios from 'axios';
+import { useRouter } from 'next/navigation';
 
 const signInSchema = z.object({
     email: z.string().email("Email must be valid."),
@@ -22,6 +24,9 @@ const signInSchema = z.object({
 })
 
 const Page = () => {
+    
+    const router = useRouter();
+
     const form = useForm<z.infer<typeof signInSchema>>({
         resolver: zodResolver(signInSchema),
         defaultValues: {
@@ -30,9 +35,37 @@ const Page = () => {
         },
     })
 
-    function onSubmit(values: z.infer<typeof signInSchema>) {
-        console.log(values)
+    const [isLoading, setIsLoading] = useState(false);
+   
+    const onSubmit = async (values: any): Promise<void> => {
+      try {
+        setIsLoading(true);
+  
+       
+        const user = await loginUser(values);
+        localStorage.setItem('userToken', user.data.token);
+        router.push('/'); 
+      } catch (error) {
+        console.error(error);
+        setIsLoading(false);
+      }
+    };
+  
+    const loginUser = async ( formData: any ): Promise<any> => {
+      try {
+        const response = await axios.post(`http://localhost:3001/api/user/login`, formData, { });
+  
+        if (response.status === 200) {
+          // Handle successful login
+          return response.data;
+        } else {
+          throw new Error('Login failed');
+        }
+      } catch (error) {
+        throw new Error('Login failed');
+      }
     }
+
   return (
     <>
         <div className="signUpWrapper">
